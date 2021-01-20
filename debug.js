@@ -1,25 +1,5 @@
 function showHeaders() {
-	showAuthHeaders();
-	showHeaderHeaders();
 	showParamHeaders();
-}
-
-function showAuthHeaders() {
-	if ($("#authentication").find(".realinputvalue").length > 0) {
-		$("#addauthbutton").hide();
-		$("#authentication").show();
-	} else {
-		$("#addauthbutton").show();
-		$("#authentication").hide();
-	}
-}
-
-function showHeaderHeaders() {
-	if ($("#allheaders").find(".realinputvalue").length > 0) {
-		$("#allheaders").show();
-	} else {
-		$("#allheaders").hide();
-	}
 }
 
 function showParamHeaders() {
@@ -70,32 +50,14 @@ $("#addfilebutton").click(function(e) {
 });
 
 function postWithAjax(myajax) {
-  myajax = myajax || {};
-  myajax.url = $("#urlvalue").val();
-  myajax.type = $("#httpmethod").val();
-  if (checkForAuth())
-  {
-	  myajax.username = $("#authentication input:first").val();
-	  myajax.password = $("#authentication input").eq(1).val();
-  }
-  myajax.complete = function(jqXHR) {
-		$("#statuspre").text(
-				"HTTP " + jqXHR.status + " " + jqXHR.statusText);
-		if (jqXHR.status == 0) {
-			httpZeroError();
-		} else if (jqXHR.status >= 200 && jqXHR.status < 300) {
-			$("#statuspre").addClass("alert-success");
-		} else if (jqXHR.status >= 400) {
-			$("#statuspre").addClass("alert-error");
-		} else {
-			$("#statuspre").addClass("alert-warning");
-		}
-		$("#outputpre").text(jqXHR.responseText);
-		$("#headerpre").text(jqXHR.getAllResponseHeaders());
-	}
+	myajax = myajax || {};
+	let url = $("#urlvalue").val();
+	myajax.method = $("#httpmethod").val();
 
-	if (jQuery.isEmptyObject(myajax.data)) {
-		myajax.contentType = 'application/x-www-form-urlencoded';
+	if(myajax.method.toUpperCase()=="GET" || myajax.method.toUpperCase()=="HEAD"){
+		delete myajax["body"];
+	} else {
+		myajax.body = JSON.stringify(myajax.body);
 	}
 
 	$("#outputframe").hide();
@@ -109,9 +71,29 @@ function postWithAjax(myajax) {
 	$("#statuspre").removeClass("alert-warning");
 
   $('#ajaxspinner').show();
-	var req = $.ajax(myajax).always(function(){
+
+  fetch(url, myajax).then(res=>{
+	$('#ajaxspinner').hide();
+	$("#statuspre").text("HTTP " + res.status + " " + res.statusText);
+	if (res.status == 0) {
+		httpZeroError();
+	} else if (res.status >= 200 && res.status < 300) {
+		$("#statuspre").addClass("alert-success");
+	} else if (res.status >= 400) {
+		$("#statuspre").addClass("alert-error");
+	} else {
+		$("#statuspre").addClass("alert-warning");
+	}
+
+	res.text().then(text=>{
+		$("#outputpre").text(text);
+		//$("#headerpre").text(jqXHR.getAllResponseHeaders());
+	})
+  })
+/*
+	$.ajax(myajax).always(function(){
     $('#ajaxspinner').hide();
-	});
+	});*/
 }
 
 $("#submitajax").click(function(e) {
@@ -119,25 +101,21 @@ $("#submitajax").click(function(e) {
   if(checkForFiles()){
     postWithAjax({
       headers: createHeaderData(),
-      data : createMultipart(), 
+      body : createMultipart(), 
       cache: false,
-      contentType: false,
-      processData: false  
+      credentials: 'include'
     });
   } else {
     postWithAjax({
       headers : createHeaderData(),
-      data : createUrlData()
+	  body : createUrlData(),
+	  credentials: 'include'
     });    
   }
 });
 
 function checkForFiles() {
 	return $("#paramform").find(".input-file").length > 0;
-}
-
-function checkForAuth() {
-	return $("#paramform").find("input[type=password]").length > 0;
 }
 
 function createUrlData(){
@@ -174,8 +152,28 @@ function createMultipart(){
   return(data)  
 }
 
+function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = jQuery.trim(cookies[i]);
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
 function createHeaderData(){
-  var mydata = {};
+  var mydata = {
+	"X-CSRFToken": getCookie("csrftoken"),/*
+	"Accept": "application/json",
+	"Content-Type": "application/json"*/
+  };
 	var parameters = $("#allheaders").find(".realinputvalue");
 	for (i = 0; i < parameters.length; i++) {
 		name = $(parameters).eq(i).attr("name");
