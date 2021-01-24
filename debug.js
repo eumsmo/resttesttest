@@ -169,11 +169,11 @@ function getCookie(name) {
 }
 
 function createHeaderData(){
-  var mydata = {
-	"X-CSRFToken": getCookie("csrftoken"),/*
+  var mydata = {/*
 	"Accept": "application/json",
 	"Content-Type": "application/json"*/
   };
+  /*
 	var parameters = $("#allheaders").find(".realinputvalue");
 	for (i = 0; i < parameters.length; i++) {
 		name = $(parameters).eq(i).attr("name");
@@ -183,6 +183,7 @@ function createHeaderData(){
 		value = $(parameters).eq(i).val();
 		mydata[name] = value
 	}
+	*/
   return(mydata);
 }
 
