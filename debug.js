@@ -169,9 +169,9 @@ function getCookie(name) {
 }
 
 function createHeaderData(){
-  var mydata = {/*
+  var mydata = {
 	"Accept": "application/json",
-	"Content-Type": "application/json"*/
+	"Content-Type": "application/json"
   };
   /*
 	var parameters = $("#allheaders").find(".realinputvalue");
